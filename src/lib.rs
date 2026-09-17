@@ -45,17 +45,17 @@
 //! ```
 
 
-pub mod crossterm;
-pub mod image;
-pub mod terminal;
-pub mod tui;
-
-#[cfg(any(feature = "ratatui", feature = "textfold-ratatui"))]
-pub mod ratatui_compat;
+// Terminal I/O (crossterm/image/terminal/tui) is termfold's concern, not this text-layout
+// kernel's — those module files are not part of ruler and their declarations were left dangling
+// by a mid-migration commit, which made the crate uncompilable. Removed. ratatui_compat likewise
+// lived on the missing tui module; it returns with tui if terminal support is ever folded back in.
+//
+// pdf-base14 AFM font metrics ARE ruler's (webfold/pdfcn/biota consume `ruler::pdf_base14`); the
+// file shipped but was never wired into the crate root. Declared here.
+pub mod pdf_base14;
 
 /// Re-exports the core layout types.
 pub mod prelude {
-    pub use super::tui::prelude::*;
     pub use super::{Box, Ruler};
 }
 
