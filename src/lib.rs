@@ -32,7 +32,7 @@
 //! + font advances (pretext's `prepare()` stage, browser-free) — so it works on real text, no browser.
 //!
 //! ```
-//! use textfold::{Box, Ruler};
+//! use ruler::{Box, Ruler};
 //! // three unit-wide glyphs, then a breakable space, then three more
 //! let boxes = [Box::glyph(1.0), Box::glyph(1.0), Box::glyph(1.0),
 //!              Box::space(1.0, 0.5),
@@ -53,6 +53,9 @@
 // pdf-base14 AFM font metrics ARE ruler's (webfold/pdfcn/biota consume `ruler::pdf_base14`); the
 // file shipped but was never wired into the crate root. Declared here.
 pub mod pdf_base14;
+/// Real TrueType fonts: glyph metrics and outlines, for callers that must draw
+/// text rather than only measure it against the PDF base-14 AFM tables.
+pub mod ttf;
 
 /// Re-exports the core layout types.
 pub mod prelude {
