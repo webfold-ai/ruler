@@ -58,6 +58,9 @@ pub struct Font {
     units_per_em: u16,
     num_glyphs: u16,
     num_h_metrics: u16,
+    ascender: i16,
+    descender: i16,
+    line_gap: i16,
     loca_long: bool,
     cmap: HashMap<u32, u16>,
 }
@@ -119,6 +122,9 @@ impl Font {
 
         let (hhea, _) = table(b"hhea")?;
         let num_h_metrics = u16at(&data, hhea + 34)?;
+        let ascender = i16at(&data, hhea + 4)?;
+        let descender = i16at(&data, hhea + 6)?;
+        let line_gap = i16at(&data, hhea + 8)?;
 
         table(b"hmtx")?;
         table(b"loca")?;
@@ -133,6 +139,9 @@ impl Font {
             units_per_em,
             num_glyphs,
             num_h_metrics,
+            ascender,
+            descender,
+            line_gap,
             loca_long,
             cmap,
         })
@@ -145,6 +154,37 @@ impl Font {
 
     pub fn num_glyphs(&self) -> u16 {
         self.num_glyphs
+    }
+
+    /// Distance from the baseline to the top of the ascenders, in font units.
+    pub fn ascender_units(&self) -> f32 {
+        self.ascender as f32
+    }
+
+    /// Distance from the baseline to the bottom of the descenders, in font
+    /// units. Negative in the font's own convention (below the baseline); this
+    /// returns it as written so callers can use it directly in y-up maths.
+    pub fn descender_units(&self) -> f32 {
+        self.descender as f32
+    }
+
+    pub fn line_gap_units(&self) -> f32 {
+        self.line_gap as f32
+    }
+
+    /// Ascent in pixels at an em size.
+    ///
+    /// Needed to place a baseline: a line box positions text by its baseline,
+    /// not its top, so a renderer that guesses "some fraction of the em" puts
+    /// every line at a slightly wrong height — uniform, plausible, and wrong.
+    pub fn ascent(&self, px: f32) -> f32 {
+        self.ascender as f32 * px / self.units_per_em as f32
+    }
+
+    /// Descent in pixels at an em size, returned positive (distance below the
+    /// baseline), which is the form line-box maths wants.
+    pub fn descent(&self, px: f32) -> f32 {
+        -(self.descender as f32) * px / self.units_per_em as f32
     }
 
     /// Map a character to a glyph id. Returns 0 (`.notdef`) when unmapped,
@@ -627,5 +667,32 @@ mod tests {
     fn rejects_non_truetype_input() {
         assert!(Font::parse(vec![0; 12]).is_err());
         assert!(Font::parse(b"OTTO________".to_vec()).is_err());
+    }
+}
+
+#[cfg(test)]
+mod metric_tests {
+    use super::*;
+
+    fn dejavu() -> Option<Font> {
+        let d = std::fs::read("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf").ok()?;
+        Some(Font::parse(d).expect("parse"))
+    }
+
+    #[test]
+    fn vertical_metrics_are_sane_and_scale() {
+        let Some(f) = dejavu() else {
+            eprintln!("skip: DejaVuSans not installed");
+            return;
+        };
+        assert!(f.ascender_units() > 0.0, "ascender must be above the baseline");
+        assert!(f.descender_units() < 0.0, "descender must be below it");
+
+        let a = f.ascent(100.0);
+        let d = f.descent(100.0);
+        assert!(d > 0.0, "descent is returned positive for line-box maths");
+        // A Latin face's ascent+descent lands near the em, never wildly off.
+        assert!((0.8..=1.4).contains(&((a + d) / 100.0)), "a={a} d={d}");
+        assert!((f.ascent(200.0) - a * 2.0).abs() < 0.01, "must scale with em");
     }
 }
