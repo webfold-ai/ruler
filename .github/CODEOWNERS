@@ -1,0 +1,4 @@
+# Code owners. Required review on the default branch needs a human owner.
+# TODO: replace the placeholders with real GitHub handles of at least two human maintainers.
+# Do not list bot accounts here.
+*       @OWNER-1 @OWNER-2
