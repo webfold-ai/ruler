@@ -1,0 +1,49 @@
+# cargo-deny policy for ruler. Run from the repository root:
+#   cargo deny check advisories bans licenses sources
+# The library has zero dependencies. The only dependency tree is the `fuzz/` crate
+# (libfuzzer-sys), which is outside the published library.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "warn"
+ignore = []
+
+[licenses]
+version = 2
+# Permissive licenses only. Anything else needs an explicit, reviewed exception here.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    # libfuzzer-sys bundles LLVM's libFuzzer under the NCSA license (fuzz/ only).
+    "NCSA",
+]
+confidence-threshold = 0.8
+
+[licenses.private]
+ignore = false
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+# The fuzz crate depends on the library by relative path; that is not a wildcard requirement.
+allow-wildcard-paths = true
+allow = []
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
