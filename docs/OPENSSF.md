@@ -38,8 +38,7 @@ the repository supports. A person must confirm each one.
 
 ## Open items (TODO)
 
-- **CODEOWNERS.** `.github/CODEOWNERS` has placeholders `@OWNER-1 @OWNER-2`. Replace them with at least
-  two human maintainers. Do not list bot accounts.
+- **CODEOWNERS.** Resolved: `@twn-lloyd @yokoszn`.
 - **Default-branch ruleset.** Create a ruleset that requires the `Rust checks` status check, a pull
   request, and approval from a code owner, and that blocks force pushes and deletion. Enabling it
   before the code owners are set would block merges.
