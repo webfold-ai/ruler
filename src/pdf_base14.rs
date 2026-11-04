@@ -1,4 +1,6 @@
-//! PDF base-14 font metrics — Helvetica, Times, Courier, Symbol, ZapfDingbats.
+//! PDF base-14 font metrics. **Only Helvetica is implemented**, for printable ASCII (0x20..=0x7E).
+//! Times, Courier, Symbol and ZapfDingbats are not in this crate; a non-ASCII or unlisted character
+//! gets a fixed default advance (556 units), which is an approximation, not a metric.
 //!
 //! The standard AFM widths are public, part of PDF spec § 9.6.2.2. No font file, no
 //! embedding: `/BaseFont /Helvetica` is legal PDF with zero bytes shipped.

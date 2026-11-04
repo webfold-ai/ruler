@@ -1,0 +1,31 @@
+[package]
+name = "ruler-fuzz"
+version = "0.0.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+ruler = { path = ".." }
+
+# The fuzz crate is its own workspace root, so cargo never walks up into the library's.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_layout"
+path = "fuzz_targets/fuzz_layout.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_text"
+path = "fuzz_targets/fuzz_text.rs"
+test = false
+doc = false
+bench = false

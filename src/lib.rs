@@ -1,17 +1,17 @@
 //! Text layout kernel — Ruler, Box, pdf-base14 AFM font metrics. Zero deps.
 //!
-//! The general-purpose text layout kernel for ptyktos. Not terminal-specific.
-//! Used by `textfold` (terminal), `webfold/htmlfold` (HTML → text),
-//! `webfold/pdfcn` (PDF → text), `biota/content/...` (document renderers).
+//! A general-purpose text layout kernel. It is not terminal-specific. It has no dependencies and
+//! no `unsafe` code. Glyph metrics for printable ASCII in Helvetica come from the AFM width table
+//! in [`pdf_base14`]; no font file is read. The other base-14 faces are not implemented.
 //!
-//! fontdue is fully subsumed (AFM table covers the 5 PDF base-14 fonts).
+//! See `README.md` for the scope, the limits, and the design notes.
 
 #![forbid(unsafe_code)]
 
-//! # textfold — text layout as the B/U accumulator fold over glyph advances
+//! # ruler — text layout as the B/U accumulator fold over glyph advances
 //!
 //! The collective invariant of **fontdue** (glyph metrics + rasterization) and **pretext** (segment
-//! + layout), lifted with `sang adapt`: both source trees cluster as one kind (~1.0 bits/symbol), and
+//! and layout), lifted with `sang adapt`: both source trees cluster as one kind (~1.0 bits/symbol), and
 //! the shared spine is the **accumulator** — fontdue's core is parse+rasterize, pretext's core is
 //! segment + `prepareWithSegment` + layout. That accumulator is the same commutative-monoid `fuse` /
 //! `mean` proved for the Kalman filter in Sanguine's `HashTrinity`: layout and estimation are the
@@ -28,11 +28,12 @@
 //! - Reflow at a new width re-reads the **same** ruler; it never re-measures (the streaming law); a
 //!   viewport of K visible lines is O(K) — flat in document size.
 //!
-//! Feed it advances from anywhere. The `fontdue` feature provides [`prefill`] — segment + break-rules
-//! + font advances (pretext's `prepare()` stage, browser-free) — so it works on real text, no browser.
+//! Feed it advances from anywhere. [`pdf_base14::boxes`] builds the box run for a string in the
+//! base-14 fonts, and [`break_class`] / [`dict_breaks`] classify break opportunities. Both run with
+//! no browser and no font file.
 //!
 //! ```
-//! use textfold::{Box, Ruler};
+//! use ruler::{Box, Ruler};
 //! // three unit-wide glyphs, then a breakable space, then three more
 //! let boxes = [Box::glyph(1.0), Box::glyph(1.0), Box::glyph(1.0),
 //!              Box::space(1.0, 0.5),
@@ -44,14 +45,13 @@
 //! assert_eq!(wide.len(), 1);
 //! ```
 
-
 // Terminal I/O (crossterm/image/terminal/tui) is termfold's concern, not this text-layout
 // kernel's — those module files are not part of ruler and their declarations were left dangling
 // by a mid-migration commit, which made the crate uncompilable. Removed. ratatui_compat likewise
 // lived on the missing tui module; it returns with tui if terminal support is ever folded back in.
 //
-// pdf-base14 AFM font metrics ARE ruler's (webfold/pdfcn/biota consume `ruler::pdf_base14`); the
-// file shipped but was never wired into the crate root. Declared here.
+// pdf-base14 AFM font metrics, behind the `pdf-base14` feature (on by default).
+#[cfg(feature = "pdf-base14")]
 pub mod pdf_base14;
 
 /// Re-exports the core layout types.
@@ -154,7 +154,7 @@ pub fn is_ideograph(c: char) -> bool {
 /// Scripts written without spaces, where word boundaries need a dictionary (UAX #14 can't break them).
 #[must_use]
 pub fn is_dict_script(c: char) -> bool {
-    matches!(c as u32, 0x0E00..=0x0E7F | 0x0E80..=0x0EFF) // Thai, Lao
+    matches!(c as u32, 0x0E00..=0x0EFF) // Thai (0E00..0E7F) and Lao (0E80..0EFF)
 }
 
 /// A word dictionary for space-less scripts (Thai/Lao). Word boundaries are found by **longest-match**
@@ -298,7 +298,7 @@ impl Ruler {
         let mut col_glyph = vec![0u32; total_px as usize + 1];
         let mut g = 0usize;
         for (x, slot) in col_glyph.iter_mut().enumerate() {
-            while g + 1 <= n && (cum[g + 1] as usize) <= x {
+            while g < n && (cum[g + 1] as usize) <= x {
                 g += 1;
             }
             *slot = g as u32;
@@ -388,8 +388,8 @@ impl Ruler {
         }
     }
 
-    /// Break into lines for a target `width` — each line is one O(1) [`break_after`] + one O(1)
-    /// [`line`]. Materializing **all** L lines is O(L) (output-bound — you emit L records); for
+    /// Break into lines for a target `width` — each line is one O(1) [`Ruler::break_after`] + one O(1)
+    /// [`Ruler::line`]. Materializing **all** L lines is O(L) (output-bound — you emit L records); for
     /// rendering you don't: query the visible lines (each O(1)) and never walk the rest.
     #[must_use]
     pub fn lines(&self, width: f32) -> Vec<Line> {
