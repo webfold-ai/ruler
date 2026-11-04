@@ -64,7 +64,8 @@ jobs:
       - name: Install cargo-cyclonedx
         run: cargo install --locked cargo-cyclonedx
       - name: Generate SBOM
-        run: cargo cyclonedx --format json --override-filename ruler.sbom.json
+        # --override-filename is a prefix; cargo-cyclonedx appends the extension.
+        run: cargo cyclonedx --format json --override-filename ruler.sbom
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ruler-cyclonedx-sbom

@@ -25,8 +25,7 @@ Replace `v0.1.0` with the tag you are checking:
 ```bash
 sha256sum -c SHA256SUMS
 cosign verify-blob \
-  --certificate ruler-v0.1.0.crate.cert \
-  --signature ruler-v0.1.0.crate.sig \
+  --bundle ruler-v0.1.0.crate.sigstore.json \
   --certificate-identity-regexp '^https://github.com/webfold-ai/ruler/\.github/workflows/release\.yml@refs/tags/v0\.1\.0$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   ruler-v0.1.0.crate

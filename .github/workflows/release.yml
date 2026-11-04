@@ -49,27 +49,23 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           cd dist
+          # One self-contained bundle per artifact. The identity is checked at verification
+          # time (see docs/SUPPLY-CHAIN.md), not when signing.
           for f in "ruler-${TAG_NAME}.crate" SHA256SUMS; do
-            cosign sign-blob --yes \
-              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-              --certificate-identity-regexp \
-                "^https://github.com/webfold-ai/ruler/\.github/workflows/release\.yml@refs/tags/${TAG_NAME//./\\.}$" \
-              --output-signature "${f}.sig" \
-              --output-certificate "${f}.cert" \
-              "$f"
+            cosign sign-blob --yes --bundle "${f}.sigstore.json" "$f"
           done
       - name: Generate SLSA build provenance
         id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: "dist/ruler-*.crate"
-      - name: Attach provenance bundle to the release assets
+      - name: Copy provenance bundle to the release assets
         env:
-          BUNDLE_B64: ${{ steps.attest.outputs.bundle }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          cd dist
-          echo "$BUNDLE_B64" | base64 -d > "ruler-${TAG_NAME}.crate.intoto.jsonl"
+          test -s "$BUNDLE_PATH"
+          cp "$BUNDLE_PATH" "dist/ruler-${TAG_NAME}.crate.intoto.jsonl"
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -78,8 +74,7 @@ jobs:
           cd dist
           gh release create "$TAG_NAME" \
             "ruler-${TAG_NAME}.crate" \
-            "ruler-${TAG_NAME}.crate.sig" \
-            "ruler-${TAG_NAME}.crate.cert" \
+            "ruler-${TAG_NAME}.crate.sigstore.json" \
             "ruler-${TAG_NAME}.crate.intoto.jsonl" \
-            SHA256SUMS SHA256SUMS.sig SHA256SUMS.cert \
+            SHA256SUMS SHA256SUMS.sigstore.json \
             --generate-notes
