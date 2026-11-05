@@ -1,5 +1,7 @@
 # ruler
 
+> **Status: research build.** This code is not production-ready. It is being hardened toward a production release, and interfaces, formats and results may change without notice.
+
 Text layout kernel for Rust. A `Ruler` prepares a run of glyph boxes once, then breaks it into
 lines at any width with an O(1) read per line, and hit-tests pixels back to caret positions.
 Zero dependencies. `#![forbid(unsafe_code)]`.
