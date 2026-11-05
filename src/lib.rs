@@ -10,15 +10,11 @@
 
 //! # ruler — text layout as the B/U accumulator fold over glyph advances
 //!
-//! The collective invariant of **fontdue** (glyph metrics + rasterization) and **pretext** (segment
-//! and layout), lifted with `sang adapt`: both source trees cluster as one kind (~1.0 bits/symbol), and
-//! the shared spine is the **accumulator** — fontdue's core is parse+rasterize, pretext's core is
-//! segment + `prepareWithSegment` + layout. That accumulator is the same commutative-monoid `fuse` /
-//! `mean` proved for the Kalman filter in Sanguine's `HashTrinity`: layout and estimation are the
-//! one B/U accumulator at different applicatives.
+//! The design is an accumulator: a cumulative-advance prefix sum built once, plus coordinate-indexed
+//! tables, so that later breaking and hit-testing are array reads.
 //!
-//! This crate is that accumulator, **browser-free** (pretext outsources width measurement to the
-//! browser's `canvas.measureText`; here advances come from the font directly):
+//! This crate needs no browser. It does not parse fonts or measure text; advances
+//! come from the caller, or from the built-in Helvetica table for printable ASCII:
 //!
 //! - [`Ruler::prepare`] accumulates the cumulative-advance prefix sum **once** — the seed (`fuse`) —
 //!   and a coordinate→break index.
@@ -251,8 +247,7 @@ pub struct Ruler {
 
 impl Ruler {
     /// Build the ruler — the `fuse` prefix sum **and** the coordinate→break index, in one pass each.
-    /// O(n + total px), done **once** (the certify: you must read each advance once — fontdue's
-    /// `append` is O(n) too). After this, every query below is O(1).
+    /// O(n + total px), done **once** (the certify: each advance is read once). After this, every query below is O(1).
     #[must_use]
     pub fn prepare(boxes: &[Box]) -> Ruler {
         let n = boxes.len();

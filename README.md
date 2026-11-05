@@ -2,9 +2,12 @@
 
 > **Status: research build.** This code is not production-ready. It is being hardened toward a production release, and interfaces, formats and results may change without notice.
 
-Text layout kernel for Rust. A `Ruler` prepares a run of glyph boxes once, then breaks it into
-lines at any width with an O(1) read per line, and hit-tests pixels back to caret positions.
-Zero dependencies. `#![forbid(unsafe_code)]`.
+Prepared text geometry for repeated line breaking and caret hit testing. Provide glyph advances once,
+then reuse the prepared layout index at different widths. Ruler is a geometry kernel, not a complete
+typography engine.
+
+It is a Rust crate with no dependencies and `#![forbid(unsafe_code)]`. Source:
+<https://github.com/webfold-ai/ruler>.
 
 > **Status: 0.1.0, unpublished (`publish = false`).** The API is small and tested against a
 > naive reference, but it has had no external users and no release yet. Expect breaking changes.

@@ -24,6 +24,9 @@ All notable changes to this project are recorded here. The format follows
   module was always compiled and the feature had no effect. The default is unchanged.
 - Documentation now says that only Helvetica, for printable ASCII, is implemented in `pdf_base14`.
   The earlier text described all five base-14 faces.
+- The README opening, the `Cargo.toml` description and the crate docs now describe the crate as text
+  geometry (prepared advances, greedy breaking, hit testing, paragraph-local updates). They no longer
+  say it replaces a font library. There is no font parsing or shaping.
 
 ### Fixed
 
