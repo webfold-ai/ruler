@@ -13,7 +13,7 @@ receive fixes.
 
 Please report security problems privately. Do **not** open a public issue or pull request.
 
-Use GitHub's private vulnerability reporting for this repository, or email the security team at security@twn.systems:
+Use GitHub's private vulnerability reporting for this repository, or email the security team at security@webfold.ai:
 <https://github.com/webfold-ai/ruler/security/advisories/new>
 
 Include:
